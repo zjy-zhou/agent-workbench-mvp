@@ -1,0 +1,204 @@
+:root {
+  color-scheme: light;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f5f7fb;
+  color: #172033;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+}
+
+.main {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #e6eaf2;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.header p {
+  margin: 6px 0 0;
+  color: #657086;
+  font-size: 14px;
+}
+
+.messages {
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.message {
+  max-width: 760px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+.message.user {
+  margin-left: auto;
+  background: #2563eb;
+  color: #fff;
+}
+
+.message.assistant {
+  margin-right: auto;
+  background: #eef4ff;
+  color: #172033;
+  border: 1px solid #dce8ff;
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  padding: 18px 24px;
+  border-top: 1px solid #e6eaf2;
+  background: #fff;
+}
+
+.composer input {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #cad2df;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.composer button {
+  height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #0f766e;
+  color: #fff;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.composer button:disabled {
+  background: #a9b5c7;
+  cursor: not-allowed;
+}
+
+.side {
+  min-height: 100vh;
+  border-left: 1px solid #e6eaf2;
+  background: #f8fafc;
+  overflow-y: auto;
+}
+
+.panel {
+  padding: 18px;
+  border-bottom: 1px solid #e6eaf2;
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.step {
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.step-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.step-reason {
+  margin-top: 6px;
+  color: #657086;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.badge {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.badge.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+pre {
+  margin: 0;
+  max-height: 360px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #dbeafe;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.quick button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #172033;
+  border-radius: 999px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+
+@media (max-width: 880px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+
+  .side {
+    min-height: auto;
+    border-left: 0;
+    border-top: 1px solid #e6eaf2;
+  }
+}
+
