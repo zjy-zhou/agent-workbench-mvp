@@ -143,6 +143,59 @@ body {
   line-height: 1.45;
 }
 
+.tool-card {
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid #d8e0ee;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.tool-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 750;
+  font-size: 14px;
+}
+
+.tool-card p {
+  margin: 8px 0 10px;
+  color: #536076;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.scope {
+  flex: 0 0 auto;
+  color: #0f766e;
+  font-size: 12px;
+}
+
+.tool-meta {
+  display: grid;
+  gap: 5px;
+  color: #334155;
+  font-size: 12px;
+}
+
+.schema-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.schema-row code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #eef2f7;
+  color: #172033;
+}
+
 .badge {
   flex: 0 0 auto;
   padding: 2px 8px;
@@ -201,4 +254,3 @@ pre {
     border-top: 1px solid #e6eaf2;
   }
 }
-

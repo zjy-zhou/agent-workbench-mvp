@@ -20,14 +20,40 @@ class PlanStep(BaseModel):
     depends_on: List[str] = Field(default_factory=list)
 
 
+class PermissionPolicy(BaseModel):
+    scope: str
+    allowed_roles: List[str] = Field(default_factory=lambda: ["customer"])
+    require_owner_check: bool = False
+    sensitive_fields: List[str] = Field(default_factory=list)
+
+
+class RetryPolicy(BaseModel):
+    max_attempts: int = Field(default=1, ge=1, le=5)
+    backoff_ms: int = Field(default=0, ge=0)
+    retryable_errors: List[str] = Field(default_factory=lambda: ["TOOL_TIMEOUT", "TEMPORARY_ERROR"])
+
+
+class TimeoutPolicy(BaseModel):
+    timeout_ms: int = Field(default=3000, ge=100, le=30000)
+
+
+class AuditLogPolicy(BaseModel):
+    enabled: bool = True
+    event_name: str
+    include_input: bool = True
+    include_output: bool = False
+    redact_fields: List[str] = Field(default_factory=list)
+
+
 class ToolDefinition(BaseModel):
     name: str
     description: str
     input_schema: Dict[str, Any]
     output_schema: Dict[str, Any]
-    permission: str = "read"
-    timeout_ms: int = 3000
-    retry: int = 1
+    permission: PermissionPolicy
+    retry: RetryPolicy = Field(default_factory=RetryPolicy)
+    timeout: TimeoutPolicy = Field(default_factory=TimeoutPolicy)
+    audit_log: AuditLogPolicy
 
 
 class ToolResult(BaseModel):
@@ -36,6 +62,9 @@ class ToolResult(BaseModel):
     input: Dict[str, Any]
     output: Dict[str, Any] = Field(default_factory=dict)
     error: Optional[str] = None
+    attempts: int = 1
+    duration_ms: int = 0
+    audit_log: Optional[Dict[str, Any]] = None
 
 
 class TraceEvent(BaseModel):
@@ -50,4 +79,3 @@ class ChatResponse(BaseModel):
     tool_results: List[ToolResult]
     trace: List[TraceEvent]
     needs_human_confirmation: bool = False
-

@@ -17,7 +17,15 @@ function App() {
   const [input, setInput] = useState("手机签收八天了还能退吗？");
   const [loading, setLoading] = useState(false);
   const [lastResponse, setLastResponse] = useState(null);
+  const [toolDefinitions, setToolDefinitions] = useState([]);
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    fetch("/api/tools")
+      .then((response) => response.json())
+      .then(setToolDefinitions)
+      .catch(() => setToolDefinitions([]));
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -61,8 +69,8 @@ function App() {
     React.createElement("div", { className: "app" },
       React.createElement("section", { className: "main" },
         React.createElement("header", { className: "header" },
-          React.createElement("h1", null, "Agent Workbench MVP"),
-          React.createElement("p", null, "项目A升级版：Planner（规划器）+ Tools（工具）+ Trace（链路追踪）")
+          React.createElement("h1", null, "Agent Harness Workbench"),
+          React.createElement("p", null, "项目A升级版：Planner（规划器）+ Tool Registry（工具注册中心）+ Audit Trace（审计链路）")
         ),
         React.createElement("main", { className: "messages", ref: scrollRef },
           messages.map((message, index) =>
@@ -100,6 +108,14 @@ function App() {
           )
         ),
         React.createElement("div", { className: "panel" },
+          React.createElement("h2", null, "Tool Registry（工具注册中心）"),
+          toolDefinitions.length
+            ? toolDefinitions.map((tool) =>
+                React.createElement(ToolCard, { key: tool.name, tool })
+              )
+            : React.createElement("div", { className: "step" }, "工具定义加载中。")
+        ),
+        React.createElement("div", { className: "panel" },
           React.createElement("h2", null, "Task Timeline（任务时间线）"),
           lastResponse?.plan?.length
             ? lastResponse.plan.map((step) =>
@@ -122,5 +138,36 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+function schemaFields(schema) {
+  return Object.keys(schema?.properties || {});
+}
 
+function ToolCard({ tool }) {
+  return React.createElement("div", { className: "tool-card" },
+    React.createElement("div", { className: "tool-card-head" },
+      React.createElement("span", null, tool.name),
+      React.createElement("span", { className: "scope" }, tool.permission?.scope || "unknown")
+    ),
+    React.createElement("p", null, tool.description),
+    React.createElement("div", { className: "tool-meta" },
+      React.createElement("span", null, `permission（权限）：${tool.permission?.allowed_roles?.join(", ") || "-"}`),
+      React.createElement("span", null, `retry（重试）：${tool.retry?.max_attempts || 1} 次`),
+      React.createElement("span", null, `timeout（超时）：${tool.timeout?.timeout_ms || 0} ms`),
+      React.createElement("span", null, `audit_log（审计日志）：${tool.audit_log?.event_name || "-"}`)
+    ),
+    React.createElement("div", { className: "schema-row" },
+      React.createElement("span", null, "input_schema（输入结构）"),
+      schemaFields(tool.input_schema).map((field) =>
+        React.createElement("code", { key: `input-${field}` }, field)
+      )
+    ),
+    React.createElement("div", { className: "schema-row" },
+      React.createElement("span", null, "output_schema（输出结构）"),
+      schemaFields(tool.output_schema).map((field) =>
+        React.createElement("code", { key: `output-${field}` }, field)
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));

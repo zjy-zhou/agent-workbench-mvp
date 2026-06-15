@@ -7,6 +7,6 @@ venv/
 .env.*
 *.log
 .pytest_cache/
+.idea/
 node_modules/
 dist/
-
