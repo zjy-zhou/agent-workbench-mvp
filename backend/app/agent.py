@@ -4,14 +4,21 @@ from copy import deepcopy
 from typing import Any, Dict
 
 from backend.app.data import DEFAULT_ORDER_ID
-from backend.app.models import ChatResponse, PlanStep, ToolResult, TraceEvent
+from backend.app.memory import memory_system
+from backend.app.models import ChatResponse, MemorySnapshot, PlanStep, ToolResult, TraceEvent
 from backend.app.planner import extract_order_id, plan_for_message
 from backend.app.tools import registry
 
 
-def run_agent(message: str, user_id: str) -> ChatResponse:
+def run_agent(message: str, user_id: str, session_id: str = "demo-session") -> ChatResponse:
     trace: list[TraceEvent] = []
     plan = plan_for_message(message)
+    memory_snapshot = memory_system.before_turn(
+        message=message,
+        user_id=user_id,
+        session_id=session_id,
+        plan=plan,
+    )
     results: list[ToolResult] = []
     context: Dict[str, Any] = {}
 
@@ -22,6 +29,23 @@ def run_agent(message: str, user_id: str) -> ChatResponse:
             payload={"steps": [step.model_dump() for step in plan]},
         )
     )
+    trace.append(
+        TraceEvent(
+            type="memory_router",
+            message="Memory Router（记忆路由器）已判断是否查询长期记忆。",
+            payload=memory_snapshot.router_decision.model_dump(),
+        )
+    )
+    if memory_snapshot.long_term_memories:
+        trace.append(
+            TraceEvent(
+                type="memory_read",
+                message="已从 Vector DB（向量数据库）读取长期偏好/历史摘要。",
+                payload={
+                    "memories": [memory.model_dump() for memory in memory_snapshot.long_term_memories]
+                },
+            )
+        )
 
     for index, step in enumerate(plan):
         step.status = "running"
@@ -50,13 +74,23 @@ def run_agent(message: str, user_id: str) -> ChatResponse:
                 pending.status = "failed"
             break
 
-    answer, needs_confirmation = compose_answer(message, context, results)
+    memory_snapshot = memory_system.after_turn(
+        message=message,
+        user_id=user_id,
+        session_id=session_id,
+        plan=plan,
+        results=results,
+        context=context,
+        snapshot=memory_snapshot,
+    )
+    answer, needs_confirmation = compose_answer(message, context, results, memory_snapshot)
     return ChatResponse(
         answer=answer,
         plan=plan,
         tool_results=results,
         trace=trace,
         needs_human_confirmation=needs_confirmation,
+        memory=memory_snapshot,
     )
 
 
@@ -99,7 +133,16 @@ def compose_answer(
     message: str,
     context: Dict[str, Any],
     results: list[ToolResult],
+    memory_snapshot: MemorySnapshot | None = None,
 ) -> tuple[str, bool]:
+    if memory_snapshot and memory_snapshot.long_term_memories and any(word in message for word in ["寄", "地址"]):
+        memory = memory_snapshot.long_term_memories[0]
+        return (
+            "Memory Router（记忆路由器）判断这个问题需要读取长期偏好。\n"
+            f"检索到的长期记忆：{memory.text}\n\n"
+            "涉及地址或寄送动作时，系统不能直接替用户执行，需要先让用户确认。"
+        ), True
+
     if context.get("last_error") == "ORDER_PERMISSION_DENIED":
         return "这个订单不在当前用户名下，出于隐私和权限保护，我不能展示该订单信息。", False
     if context.get("last_error") == "ORDER_NOT_FOUND":
@@ -135,4 +178,3 @@ def compose_answer(
         return f"检索到规则：{policy['rule_name']}。{policy['notes']}", False
 
     return "当前没有找到可执行的任务结果，请补充订单号或售后问题。", False
-

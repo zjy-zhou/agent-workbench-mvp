@@ -196,6 +196,71 @@ body {
   color: #172033;
 }
 
+.memory-box {
+  display: grid;
+  gap: 10px;
+}
+
+.memory-section {
+  padding: 12px;
+  border: 1px solid #d8e0ee;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.memory-title {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 750;
+  color: #172033;
+}
+
+.memory-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #536076;
+  font-size: 12px;
+}
+
+.memory-section p {
+  margin: 6px 0;
+  color: #536076;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chips code,
+.memory-hit code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #eef2f7;
+  color: #172033;
+  font-size: 12px;
+}
+
+.memory-hit {
+  padding: 8px 0;
+  border-top: 1px solid #eef2f7;
+}
+
+.memory-hit:first-of-type {
+  border-top: 0;
+}
+
+.mini-pre {
+  max-height: 180px;
+  margin-top: 8px;
+  background: #111827;
+}
+
 .badge {
   flex: 0 0 auto;
   padding: 2px 8px;

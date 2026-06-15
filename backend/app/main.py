@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.agent import run_agent
-from backend.app.models import ChatRequest, ChatResponse
+from backend.app.memory import memory_system
+from backend.app.models import ChatRequest, ChatResponse, MemorySnapshot
 from backend.app.tools import registry
 
 
@@ -37,8 +38,16 @@ def list_tools() -> list[dict]:
 
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
-    return run_agent(message=request.message, user_id=request.user_id)
+    return run_agent(
+        message=request.message,
+        user_id=request.user_id,
+        session_id=request.session_id,
+    )
+
+
+@app.get("/api/memory/{user_id}", response_model=MemorySnapshot)
+def memory_overview(user_id: str, session_id: str = "demo-session") -> MemorySnapshot:
+    return memory_system.overview(user_id=user_id, session_id=session_id)
 
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
-

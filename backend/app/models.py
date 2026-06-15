@@ -67,6 +67,51 @@ class ToolResult(BaseModel):
     audit_log: Optional[Dict[str, Any]] = None
 
 
+class MemoryDecision(BaseModel):
+    should_query_long_term: bool
+    reason: str
+    target_store: Literal["redis", "mysql", "vector_db", "none"] = "none"
+    query: str = ""
+    signals: List[str] = Field(default_factory=list)
+
+
+class SessionState(BaseModel):
+    user_id: str
+    session_id: str
+    active_intent: str = "unknown"
+    slots: Dict[str, Any] = Field(default_factory=dict)
+    turn_count: int = 0
+    last_message: str = ""
+    updated_at: str = ""
+
+
+class BusinessFlowState(BaseModel):
+    flow_id: str
+    user_id: str
+    flow_type: str
+    status: Literal["open", "completed", "cancelled"] = "open"
+    required_slots: List[str] = Field(default_factory=list)
+    collected_slots: Dict[str, Any] = Field(default_factory=dict)
+    summary: str = ""
+    updated_at: str = ""
+
+
+class MemoryRecord(BaseModel):
+    id: str
+    user_id: str
+    kind: Literal["preference", "summary"]
+    text: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    score: float = 0
+
+
+class MemorySnapshot(BaseModel):
+    router_decision: MemoryDecision
+    session_state: SessionState
+    active_flow: Optional[BusinessFlowState] = None
+    long_term_memories: List[MemoryRecord] = Field(default_factory=list)
+
+
 class TraceEvent(BaseModel):
     type: str
     message: str
@@ -79,3 +124,4 @@ class ChatResponse(BaseModel):
     tool_results: List[ToolResult]
     trace: List[TraceEvent]
     needs_human_confirmation: bool = False
+    memory: Optional[MemorySnapshot] = None

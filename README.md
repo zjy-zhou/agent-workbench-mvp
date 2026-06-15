@@ -30,12 +30,28 @@
   - `audit_log`（审计日志）
 - 统一工具执行入口：权限检查、超时控制、失败重试、审计事件生成
 
+当前 `memory-router` 分支实现第三周能力：
+
+- Memory（记忆）三层存储设计
+  - Redis（缓存数据库）：当前会话状态，比如当前意图、槽位、轮次、最后一句话
+  - MySQL（关系型数据库）：未完成业务流程，比如退货流程已经校验完成但等待用户确认
+  - Vector DB（向量数据库）：长期偏好和历史摘要，比如常用地址、历史售后摘要
+- Memory Router（记忆路由器）：根据用户问题判断是否需要查长期记忆
+- 本地 MVP 使用可替换适配层：
+  - `RedisSessionStore` 模拟 Redis 会话缓存
+  - `BusinessFlowStore` 使用 SQLite 做 MySQL 形态的本地关系存储
+  - `VectorMemoryStore` 使用轻量向量相似度做长期记忆检索
+
 ## 架构
 
 ```mermaid
 flowchart TD
     U["User（用户）"] --> FE["React Chat UI（聊天界面）"]
     FE --> API["FastAPI（后端服务）"]
+    API --> MR["Memory Router（记忆路由器）"]
+    MR --> RS["Redis（缓存数据库）：当前会话状态"]
+    MR --> MS["MySQL（关系型数据库）：未完成业务流程"]
+    MR --> VS["Vector DB（向量数据库）：长期偏好/历史摘要"]
     API --> P["Planner（规划器）"]
     P --> TR["Tool Registry（工具注册中心）"]
     TR --> H["Harness（运行治理）：Permission / Retry / Timeout / Audit"]
@@ -69,6 +85,8 @@ http://127.0.0.1:8020
 手机签收八天了还能退吗？
 查一下订单 202606150001
 我想退货，订单号 202606150002
+给我寄过来
+以后都寄到这个地址，帮我记住
 ```
 
 ## 下一阶段计划

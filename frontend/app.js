@@ -116,6 +116,12 @@ function App() {
             : React.createElement("div", { className: "step" }, "工具定义加载中。")
         ),
         React.createElement("div", { className: "panel" },
+          React.createElement("h2", null, "Memory（记忆）"),
+          lastResponse?.memory
+            ? React.createElement(MemoryPanel, { memory: lastResponse.memory })
+            : React.createElement("div", { className: "step" }, "发送消息后展示记忆路由。")
+        ),
+        React.createElement("div", { className: "panel" },
           React.createElement("h2", null, "Task Timeline（任务时间线）"),
           lastResponse?.plan?.length
             ? lastResponse.plan.map((step) =>
@@ -134,6 +140,61 @@ function App() {
           React.createElement("pre", null, traceJson)
         )
       )
+    )
+  );
+}
+
+function MemoryPanel({ memory }) {
+  const decision = memory.router_decision || {};
+  const session = memory.session_state || {};
+  const activeFlow = memory.active_flow;
+  const longTerm = memory.long_term_memories || [];
+
+  return React.createElement("div", { className: "memory-box" },
+    React.createElement("div", { className: "memory-section" },
+      React.createElement("div", { className: "memory-title" }, "Memory Router（记忆路由器）"),
+      React.createElement("div", { className: "memory-row" },
+        React.createElement("span", null, "是否查长期记忆"),
+        React.createElement("strong", null, decision.should_query_long_term ? "是" : "否")
+      ),
+      React.createElement("p", null, decision.reason || "-"),
+      React.createElement("div", { className: "chips" },
+        (decision.signals || []).map((signal) =>
+          React.createElement("code", { key: signal }, signal)
+        )
+      )
+    ),
+    React.createElement("div", { className: "memory-section" },
+      React.createElement("div", { className: "memory-title" }, "Redis（缓存数据库）：当前会话状态"),
+      React.createElement("div", { className: "memory-row" },
+        React.createElement("span", null, "active_intent（当前意图）"),
+        React.createElement("strong", null, session.active_intent || "-")
+      ),
+      React.createElement("div", { className: "memory-row" },
+        React.createElement("span", null, "turn_count（轮次）"),
+        React.createElement("strong", null, String(session.turn_count ?? 0))
+      ),
+      React.createElement("pre", { className: "mini-pre" }, JSON.stringify(session.slots || {}, null, 2))
+    ),
+    React.createElement("div", { className: "memory-section" },
+      React.createElement("div", { className: "memory-title" }, "MySQL（关系型数据库）：未完成业务流程"),
+      activeFlow
+        ? React.createElement("pre", { className: "mini-pre" }, JSON.stringify(activeFlow, null, 2))
+        : React.createElement("p", null, "暂无未完成流程。")
+    ),
+    React.createElement("div", { className: "memory-section" },
+      React.createElement("div", { className: "memory-title" }, "Vector DB（向量数据库）：长期偏好和历史摘要"),
+      longTerm.length
+        ? longTerm.map((item) =>
+            React.createElement("div", { className: "memory-hit", key: item.id },
+              React.createElement("div", { className: "memory-row" },
+                React.createElement("span", null, item.kind),
+                React.createElement("strong", null, `score ${item.score}`)
+              ),
+              React.createElement("p", null, item.text)
+            )
+          )
+        : React.createElement("p", null, "本轮未查询长期记忆。")
     )
   );
 }
