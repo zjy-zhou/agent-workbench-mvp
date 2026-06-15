@@ -255,6 +255,70 @@ body {
   border-top: 0;
 }
 
+.guardrail-box {
+  display: grid;
+  gap: 10px;
+}
+
+.guardrail-section {
+  padding: 12px;
+  border: 1px solid #d8e0ee;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.policy-item {
+  padding: 8px 0;
+  border-top: 1px solid #eef2f7;
+}
+
+.policy-item:first-of-type {
+  border-top: 0;
+}
+
+.policy-item p,
+.guardrail-section p {
+  margin: 6px 0;
+  color: #536076;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.finding {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.finding strong {
+  font-size: 12px;
+}
+
+.finding.block {
+  border-color: #fecaca;
+  background: #fff1f2;
+}
+
+.finding.warning {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.finding.info {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.ok {
+  color: #166534;
+}
+
+.blocked {
+  color: #991b1b;
+}
+
 .mini-pre {
   max-height: 180px;
   margin-top: 8px;

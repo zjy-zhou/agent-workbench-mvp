@@ -112,6 +112,28 @@ class MemorySnapshot(BaseModel):
     long_term_memories: List[MemoryRecord] = Field(default_factory=list)
 
 
+class GuardrailFinding(BaseModel):
+    code: str
+    severity: Literal["info", "warning", "block"]
+    message: str
+    evidence: str = ""
+
+
+class GuardrailResult(BaseModel):
+    stage: Literal["input", "action", "output"]
+    allowed: bool = True
+    findings: List[GuardrailFinding] = Field(default_factory=list)
+    sanitized_text: str = ""
+    requires_confirmation: bool = False
+    confirmation_reason: str = ""
+
+
+class GuardrailSnapshot(BaseModel):
+    input: GuardrailResult
+    action: Optional[GuardrailResult] = None
+    output: Optional[GuardrailResult] = None
+
+
 class TraceEvent(BaseModel):
     type: str
     message: str
@@ -125,3 +147,4 @@ class ChatResponse(BaseModel):
     trace: List[TraceEvent]
     needs_human_confirmation: bool = False
     memory: Optional[MemorySnapshot] = None
+    guardrails: Optional[GuardrailSnapshot] = None

@@ -4,14 +4,44 @@ from copy import deepcopy
 from typing import Any, Dict
 
 from backend.app.data import DEFAULT_ORDER_ID
+from backend.app.guardrails import guardrail_service
 from backend.app.memory import memory_system
-from backend.app.models import ChatResponse, MemorySnapshot, PlanStep, ToolResult, TraceEvent
+from backend.app.models import (
+    ChatResponse,
+    GuardrailSnapshot,
+    MemorySnapshot,
+    PlanStep,
+    ToolResult,
+    TraceEvent,
+)
 from backend.app.planner import extract_order_id, plan_for_message
 from backend.app.tools import registry
 
 
 def run_agent(message: str, user_id: str, session_id: str = "demo-session") -> ChatResponse:
     trace: list[TraceEvent] = []
+    input_guard = guardrail_service.check_input(message=message, user_id=user_id)
+    guardrails = GuardrailSnapshot(input=input_guard)
+    trace.append(
+        TraceEvent(
+            type="input_guard",
+            message="Input Guard（输入护栏）已完成安全检查。",
+            payload=input_guard.model_dump(),
+        )
+    )
+    if not input_guard.allowed:
+        block_answer = build_guardrail_block_answer(input_guard)
+        output_guard = guardrail_service.check_output(block_answer)
+        guardrails.output = output_guard
+        return ChatResponse(
+            answer=output_guard.sanitized_text,
+            plan=[],
+            tool_results=[],
+            trace=trace,
+            needs_human_confirmation=False,
+            guardrails=guardrails,
+        )
+
     plan = plan_for_message(message)
     memory_snapshot = memory_system.before_turn(
         message=message,
@@ -84,13 +114,35 @@ def run_agent(message: str, user_id: str, session_id: str = "demo-session") -> C
         snapshot=memory_snapshot,
     )
     answer, needs_confirmation = compose_answer(message, context, results, memory_snapshot)
+    action_guard = guardrail_service.check_action(
+        context=context,
+        needs_confirmation=needs_confirmation,
+    )
+    guardrails.action = action_guard
+    trace.append(
+        TraceEvent(
+            type="action_guard",
+            message="Action Guard（动作护栏）已判断是否需要二次确认。",
+            payload=action_guard.model_dump(),
+        )
+    )
+    output_guard = guardrail_service.check_output(answer)
+    guardrails.output = output_guard
+    trace.append(
+        TraceEvent(
+            type="output_guard",
+            message="Output Guard（输出护栏）已完成最终回复脱敏检查。",
+            payload=output_guard.model_dump(),
+        )
+    )
     return ChatResponse(
-        answer=answer,
+        answer=output_guard.sanitized_text,
         plan=plan,
         tool_results=results,
         trace=trace,
-        needs_human_confirmation=needs_confirmation,
+        needs_human_confirmation=bool(needs_confirmation or action_guard.requires_confirmation),
         memory=memory_snapshot,
+        guardrails=guardrails,
     )
 
 
@@ -178,3 +230,15 @@ def compose_answer(
         return f"检索到规则：{policy['rule_name']}。{policy['notes']}", False
 
     return "当前没有找到可执行的任务结果，请补充订单号或售后问题。", False
+
+
+def build_guardrail_block_answer(guard_result) -> str:
+    codes = {finding.code for finding in guard_result.findings}
+    if "PRIVACY_LEAK_REQUEST" in codes:
+        return (
+            "这个请求涉及他人隐私信息，我不能帮你查询或泄露手机号、身份证、地址等内容。\n"
+            "如果是查询你自己的订单，请提供本人账号下的订单号。"
+        )
+    if "OUT_OF_DOMAIN" in codes:
+        return "我目前只处理电商客服相关问题，比如查订单、查物流、退货、退款和售后规则。"
+    return "这个请求暂时不能处理，请换一种安全、明确的方式描述你的问题。"

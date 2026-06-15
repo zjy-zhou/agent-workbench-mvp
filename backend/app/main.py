@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.agent import run_agent
+from backend.app.guardrails import guardrail_service
 from backend.app.memory import memory_system
 from backend.app.models import ChatRequest, ChatResponse, MemorySnapshot
 from backend.app.tools import registry
@@ -34,6 +35,11 @@ def health() -> dict:
 @app.get("/api/tools")
 def list_tools() -> list[dict]:
     return [tool.model_dump() for tool in registry.definitions()]
+
+
+@app.get("/api/guardrails")
+def list_guardrails() -> list[dict]:
+    return guardrail_service.policies()
 
 
 @app.post("/api/chat", response_model=ChatResponse)

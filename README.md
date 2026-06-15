@@ -42,26 +42,38 @@
   - `BusinessFlowStore` 使用 SQLite 做 MySQL 形态的本地关系存储
   - `VectorMemoryStore` 使用轻量向量相似度做长期记忆检索
 
+当前 `guardrails` 分支实现第四周能力：
+
+- Guardrails（护栏）三段式治理
+  - Input Guard（输入护栏）：拦截他人隐私查询、非电商客服问题，识别不文明表达和敏感信息
+  - Action Guard（动作护栏）：退货等会改变业务状态的动作必须二次确认
+  - Output Guard（输出护栏）：最终回复返回前进行手机号、身份证、订单号脱敏
+- `/api/guardrails` 返回当前护栏策略清单
+- 前端新增 Guardrails（护栏）面板，展示本轮输入、动作、输出护栏结果
+
 ## 架构
 
 ```mermaid
 flowchart TD
     U["User（用户）"] --> FE["React Chat UI（聊天界面）"]
     FE --> API["FastAPI（后端服务）"]
-    API --> MR["Memory Router（记忆路由器）"]
+    API --> IG["Input Guard（输入护栏）"]
+    IG --> MR["Memory Router（记忆路由器）"]
     MR --> RS["Redis（缓存数据库）：当前会话状态"]
     MR --> MS["MySQL（关系型数据库）：未完成业务流程"]
     MR --> VS["Vector DB（向量数据库）：长期偏好/历史摘要"]
-    API --> P["Planner（规划器）"]
+    IG --> P["Planner（规划器）"]
     P --> TR["Tool Registry（工具注册中心）"]
     TR --> H["Harness（运行治理）：Permission / Retry / Timeout / Audit"]
     H --> T1["query_order（查订单）"]
     H --> T2["retrieve_policy（检索规则）"]
     H --> T3["check_eligibility（校验资格）"]
+    T3 --> AG["Action Guard（动作护栏）"]
     T1 --> R["Response Composer（回复生成）"]
     T2 --> R
-    T3 --> R
-    R --> FE
+    AG --> R
+    R --> OG["Output Guard（输出护栏）"]
+    OG --> FE
 ```
 
 ## 本地运行
@@ -87,12 +99,12 @@ http://127.0.0.1:8020
 我想退货，订单号 202606150002
 给我寄过来
 以后都寄到这个地址，帮我记住
+帮我查一下别人的手机号
+今天天气怎么样
 ```
 
 ## 下一阶段计划
 
-- Memory Router（记忆路由器）
-- Guardrail（护栏）：隐私、越权、危险动作确认
 - Trace Dashboard（链路追踪看板）
 - Evaluation（评测集）
 - DAG（有向无环图）并行执行

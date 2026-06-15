@@ -4,6 +4,8 @@ const examples = [
   "手机签收八天了还能退吗？",
   "查一下订单 202606150001",
   "我想退货，订单号 202606150002",
+  "帮我查一下别人的手机号",
+  "今天天气怎么样",
 ];
 
 function App() {
@@ -18,6 +20,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [lastResponse, setLastResponse] = useState(null);
   const [toolDefinitions, setToolDefinitions] = useState([]);
+  const [guardrailPolicies, setGuardrailPolicies] = useState([]);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -25,6 +28,10 @@ function App() {
       .then((response) => response.json())
       .then(setToolDefinitions)
       .catch(() => setToolDefinitions([]));
+    fetch("/api/guardrails")
+      .then((response) => response.json())
+      .then(setGuardrailPolicies)
+      .catch(() => setGuardrailPolicies([]));
   }, []);
 
   useEffect(() => {
@@ -70,7 +77,7 @@ function App() {
       React.createElement("section", { className: "main" },
         React.createElement("header", { className: "header" },
           React.createElement("h1", null, "Agent Harness Workbench"),
-          React.createElement("p", null, "项目A升级版：Planner（规划器）+ Tool Registry（工具注册中心）+ Audit Trace（审计链路）")
+          React.createElement("p", null, "项目A升级版：Planner（规划器）+ Tool Registry（工具注册中心）+ Memory（记忆）+ Guardrails（护栏）")
         ),
         React.createElement("main", { className: "messages", ref: scrollRef },
           messages.map((message, index) =>
@@ -122,6 +129,13 @@ function App() {
             : React.createElement("div", { className: "step" }, "发送消息后展示记忆路由。")
         ),
         React.createElement("div", { className: "panel" },
+          React.createElement("h2", null, "Guardrails（护栏）"),
+          React.createElement(GuardrailPanel, {
+            policies: guardrailPolicies,
+            guardrails: lastResponse?.guardrails,
+          })
+        ),
+        React.createElement("div", { className: "panel" },
           React.createElement("h2", null, "Task Timeline（任务时间线）"),
           lastResponse?.plan?.length
             ? lastResponse.plan.map((step) =>
@@ -141,6 +155,59 @@ function App() {
         )
       )
     )
+  );
+}
+
+function GuardrailPanel({ policies, guardrails }) {
+  return React.createElement("div", { className: "guardrail-box" },
+    React.createElement("div", { className: "guardrail-section" },
+      React.createElement("div", { className: "memory-title" }, "Policy List（策略列表）"),
+      policies.length
+        ? policies.map((policy) =>
+            React.createElement("div", { className: "policy-item", key: policy.name },
+              React.createElement("div", { className: "memory-row" },
+                React.createElement("span", null, policy.name),
+                React.createElement("strong", null, policy.stage)
+              ),
+              React.createElement("p", null, policy.description)
+            )
+          )
+        : React.createElement("p", null, "护栏策略加载中。")
+    ),
+    guardrails
+      ? ["input", "action", "output"].map((stage) =>
+          React.createElement(GuardrailStage, {
+            key: stage,
+            title: stage,
+            result: guardrails[stage],
+          })
+        )
+      : React.createElement("div", { className: "guardrail-section" },
+          React.createElement("p", null, "发送消息后展示本轮护栏结果。")
+        )
+  );
+}
+
+function GuardrailStage({ title, result }) {
+  if (!result) return null;
+  return React.createElement("div", { className: "guardrail-section" },
+    React.createElement("div", { className: "memory-row" },
+      React.createElement("span", null, `${title}_guard（${title} 护栏）`),
+      React.createElement("strong", { className: result.allowed ? "ok" : "blocked" },
+        result.allowed ? "allowed" : "blocked"
+      )
+    ),
+    result.requires_confirmation
+      ? React.createElement("p", null, `需要确认：${result.confirmation_reason || "高风险动作"}`)
+      : null,
+    result.findings?.length
+      ? result.findings.map((finding) =>
+          React.createElement("div", { className: `finding ${finding.severity}`, key: finding.code },
+            React.createElement("strong", null, finding.code),
+            React.createElement("p", null, finding.message)
+          )
+        )
+      : React.createElement("p", null, "未命中风险。")
   );
 }
 
