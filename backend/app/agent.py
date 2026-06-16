@@ -42,7 +42,7 @@ def run_agent(message: str, user_id: str, session_id: str = "demo-session") -> C
             guardrails=guardrails,
         )
 
-    plan = plan_for_message(message)
+    plan, llm_result = plan_for_message(message)
     memory_snapshot = memory_system.before_turn(
         message=message,
         user_id=user_id,
@@ -52,6 +52,13 @@ def run_agent(message: str, user_id: str, session_id: str = "demo-session") -> C
     results: list[ToolResult] = []
     context: Dict[str, Any] = {}
 
+    trace.append(
+        TraceEvent(
+            type="llm_planner",
+            message="LLM Planner（大模型规划器）已完成任务规划。",
+            payload=llm_result.model_dump(exclude={"raw_response"}),
+        )
+    )
     trace.append(
         TraceEvent(
             type="planner",
@@ -141,6 +148,7 @@ def run_agent(message: str, user_id: str, session_id: str = "demo-session") -> C
         tool_results=results,
         trace=trace,
         needs_human_confirmation=bool(needs_confirmation or action_guard.requires_confirmation),
+        llm=llm_result,
         memory=memory_snapshot,
         guardrails=guardrails,
     )

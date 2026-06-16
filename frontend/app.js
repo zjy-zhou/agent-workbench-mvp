@@ -21,6 +21,7 @@ function App() {
   const [lastResponse, setLastResponse] = useState(null);
   const [toolDefinitions, setToolDefinitions] = useState([]);
   const [guardrailPolicies, setGuardrailPolicies] = useState([]);
+  const [llmStatus, setLlmStatus] = useState(null);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -32,6 +33,10 @@ function App() {
       .then((response) => response.json())
       .then(setGuardrailPolicies)
       .catch(() => setGuardrailPolicies([]));
+    fetch("/api/llm/status")
+      .then((response) => response.json())
+      .then(setLlmStatus)
+      .catch(() => setLlmStatus(null));
   }, []);
 
   useEffect(() => {
@@ -77,7 +82,7 @@ function App() {
       React.createElement("section", { className: "main" },
         React.createElement("header", { className: "header" },
           React.createElement("h1", null, "Agent Harness Workbench"),
-          React.createElement("p", null, "项目A升级版：Planner（规划器）+ Tool Registry（工具注册中心）+ Memory（记忆）+ Guardrails（护栏）")
+          React.createElement("p", null, "项目B：Qwen Plus（通义千问）+ Tool Registry（工具注册中心）+ Memory（记忆）+ Guardrails（护栏）")
         ),
         React.createElement("main", { className: "messages", ref: scrollRef },
           messages.map((message, index) =>
@@ -123,6 +128,13 @@ function App() {
             : React.createElement("div", { className: "step" }, "工具定义加载中。")
         ),
         React.createElement("div", { className: "panel" },
+          React.createElement("h2", null, "LLM Planner（大模型规划器）"),
+          React.createElement(LLMPanel, {
+            status: llmStatus,
+            llm: lastResponse?.llm,
+          })
+        ),
+        React.createElement("div", { className: "panel" },
           React.createElement("h2", null, "Memory（记忆）"),
           lastResponse?.memory
             ? React.createElement(MemoryPanel, { memory: lastResponse.memory })
@@ -155,6 +167,40 @@ function App() {
         )
       )
     )
+  );
+}
+
+function LLMPanel({ status, llm }) {
+  return React.createElement("div", { className: "llm-box" },
+    React.createElement("div", { className: "memory-row" },
+      React.createElement("span", null, "model（模型）"),
+      React.createElement("strong", null, status?.model || "qwen-plus")
+    ),
+    React.createElement("div", { className: "memory-row" },
+      React.createElement("span", null, "enabled（已启用）"),
+      React.createElement("strong", { className: status?.enabled ? "ok" : "blocked" },
+        status?.enabled ? "yes" : "no"
+      )
+    ),
+    llm
+      ? React.createElement(React.Fragment, null,
+          React.createElement("div", { className: "memory-row" },
+            React.createElement("span", null, "used（本轮使用）"),
+            React.createElement("strong", { className: llm.used ? "ok" : "blocked" },
+              llm.used ? "yes" : "fallback"
+            )
+          ),
+          React.createElement("div", { className: "memory-row" },
+            React.createElement("span", null, "intent（意图）"),
+            React.createElement("strong", null, llm.intent || "-")
+          ),
+          React.createElement("div", { className: "memory-row" },
+            React.createElement("span", null, "confidence（置信度）"),
+            React.createElement("strong", null, String(llm.confidence ?? 0))
+          ),
+          React.createElement("p", null, llm.reason || llm.error || "暂无规划说明。")
+        )
+      : React.createElement("p", null, "发送消息后展示本轮 qwen-plus 规划结果。")
   );
 }
 

@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.app.agent import run_agent
 from backend.app.guardrails import guardrail_service
+from backend.app.llm import qwen_client
 from backend.app.memory import memory_system
 from backend.app.models import ChatRequest, ChatResponse, MemorySnapshot
 from backend.app.tools import registry
@@ -40,6 +41,11 @@ def list_tools() -> list[dict]:
 @app.get("/api/guardrails")
 def list_guardrails() -> list[dict]:
     return guardrail_service.policies()
+
+
+@app.get("/api/llm/status")
+def llm_status() -> dict:
+    return qwen_client.status()
 
 
 @app.post("/api/chat", response_model=ChatResponse)

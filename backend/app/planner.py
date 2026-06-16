@@ -3,7 +3,8 @@ from __future__ import annotations
 import re
 from typing import Optional
 
-from backend.app.models import PlanStep
+from backend.app.llm import llm_planner
+from backend.app.models import LLMPlannerResult, PlanStep
 
 
 ORDER_ID_PATTERN = re.compile(r"\b(20\d{10})\b")
@@ -14,8 +15,7 @@ def extract_order_id(message: str) -> Optional[str]:
     return match.group(1) if match else None
 
 
-def plan_for_message(message: str) -> list[PlanStep]:
-    normalized = message.strip().lower()
+def rule_based_plan_for_message(message: str) -> list[PlanStep]:
     wants_return = any(word in message for word in ["退", "售后", "退款", "签收", "换货"])
     wants_order = any(word in message for word in ["订单", "查一下", "查询"])
 
@@ -62,3 +62,9 @@ def plan_for_message(message: str) -> list[PlanStep]:
         )
     ]
 
+
+def plan_for_message(message: str) -> tuple[list[PlanStep], LLMPlannerResult]:
+    return llm_planner.plan(
+        message=message,
+        fallback_planner=rule_based_plan_for_message,
+    )

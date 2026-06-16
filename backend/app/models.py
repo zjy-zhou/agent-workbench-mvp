@@ -20,6 +20,20 @@ class PlanStep(BaseModel):
     depends_on: List[str] = Field(default_factory=list)
 
 
+class LLMPlannerResult(BaseModel):
+    enabled: bool = False
+    used: bool = False
+    provider: str = "qwen"
+    model: str = "qwen-plus"
+    intent: str = "unknown"
+    confidence: float = 0
+    reason: str = ""
+    fallback_used: bool = True
+    error: Optional[str] = None
+    raw_response: str = ""
+    usage: Dict[str, Any] = Field(default_factory=dict)
+
+
 class PermissionPolicy(BaseModel):
     scope: str
     allowed_roles: List[str] = Field(default_factory=lambda: ["customer"])
@@ -146,5 +160,6 @@ class ChatResponse(BaseModel):
     tool_results: List[ToolResult]
     trace: List[TraceEvent]
     needs_human_confirmation: bool = False
+    llm: Optional[LLMPlannerResult] = None
     memory: Optional[MemorySnapshot] = None
     guardrails: Optional[GuardrailSnapshot] = None

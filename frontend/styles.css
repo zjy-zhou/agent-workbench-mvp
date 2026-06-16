@@ -260,6 +260,20 @@ body {
   gap: 10px;
 }
 
+.llm-box {
+  padding: 12px;
+  border: 1px solid #d8e0ee;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.llm-box p {
+  margin: 8px 0 0;
+  color: #536076;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .guardrail-section {
   padding: 12px;
   border: 1px solid #d8e0ee;

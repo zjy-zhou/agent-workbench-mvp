@@ -1,6 +1,6 @@
 # Agent Workbench MVP
 
-项目定位：基于项目A的电商智能客服经验，升级成一个面向电商客服/运营人员的 Agent Workbench（智能体工作台）最小闭环。
+项目定位：项目B，基于项目A的电商智能客服经验，升级成一个面向电商客服/运营人员的 Agent Workbench（智能体工作台）最小闭环。
 
 当前版本实现第一周 MVP：
 
@@ -51,6 +51,14 @@
 - `/api/guardrails` 返回当前护栏策略清单
 - 前端新增 Guardrails（护栏）面板，展示本轮输入、动作、输出护栏结果
 
+当前 `qwen-plus-integration` 分支实现大模型接入：
+
+- Qwen Plus（通义千问 qwen-plus）接入
+- LLM Planner（大模型规划器）：用 qwen-plus 做意图识别和任务链路规划
+- Rule-based Fallback（规则兜底）：大模型不可用或返回异常时，自动回退到原有规则 Planner
+- `/api/llm/status` 返回模型启用状态，不返回 API Key
+- 前端新增 LLM Planner（大模型规划器）面板，展示本轮是否使用 qwen-plus、意图、置信度和 fallback 状态
+
 ## 架构
 
 ```mermaid
@@ -58,11 +66,12 @@ flowchart TD
     U["User（用户）"] --> FE["React Chat UI（聊天界面）"]
     FE --> API["FastAPI（后端服务）"]
     API --> IG["Input Guard（输入护栏）"]
+    IG --> LLM["Qwen Plus（通义千问）：LLM Planner"]
     IG --> MR["Memory Router（记忆路由器）"]
     MR --> RS["Redis（缓存数据库）：当前会话状态"]
     MR --> MS["MySQL（关系型数据库）：未完成业务流程"]
     MR --> VS["Vector DB（向量数据库）：长期偏好/历史摘要"]
-    IG --> P["Planner（规划器）"]
+    LLM --> P["Planner（规划器）：LLM 优先 / 规则兜底"]
     P --> TR["Tool Registry（工具注册中心）"]
     TR --> H["Harness（运行治理）：Permission / Retry / Timeout / Audit"]
     H --> T1["query_order（查订单）"]
@@ -82,6 +91,7 @@ flowchart TD
 cd /Users/zhoujiaying/Documents/Codex/agent-workbench-mvp
 python3 -m venv .venv
 .venv/bin/python -m pip install -r backend/requirements.txt
+export DASHSCOPE_API_KEY=your_dashscope_api_key
 .venv/bin/python -m uvicorn backend.app.main:app --reload --port 8020
 ```
 
